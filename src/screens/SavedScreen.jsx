@@ -25,7 +25,7 @@ function ProductRow({ p, region, onClick }) {
   const v = p.variants[region] || Object.values(p.variants)[0]
   return (
     <button onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 13, width: '100%', textAlign: 'left', border: 'none', background: T.paper, borderRadius: 16, padding: 12, cursor: 'pointer', fontFamily: T.ui, marginBottom: 10, boxShadow: '0 1px 2px rgba(40,35,20,0.04)' }}>
-      <Slot w={48} h={48} r={12} emoji={p.emoji} />
+      <Slot w={48} h={48} r={12} imgSrc={p.image} emoji={p.emoji} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 11, letterSpacing: 0.5, color: T.muted, fontWeight: 700 }}>{p.brand.toUpperCase()}</div>
         <div style={{ fontSize: 14.5, fontWeight: 600, color: T.ink, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>

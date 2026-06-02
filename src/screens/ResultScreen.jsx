@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { T, bandColor, flag } from '../theme.js'
 import { Ico } from '../components/icons.jsx'
 import { Screen, TopBar, Chip, SectionLabel, PrimaryButton, GhostButton } from '../components/primitives.jsx'
@@ -67,7 +67,7 @@ function ReasonRow({ r, last, flagged }) {
 
 export default function ResultScreen({ nav, data, gtin, region, setRegion, scanStyle, driversStyle = 'rows', fresh, favs, toggleFav, avoidList, avoidOptions, onProductFetched }) {
   const [loading, setLoading] = useState(!!fresh)
-  const [apiError, setApiError] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   // If product not in data yet, fetch from OFF API
   useEffect(() => {
@@ -96,6 +96,27 @@ export default function ResultScreen({ nav, data, gtin, region, setRegion, scanS
       nav.replace('notfound', { gtin })
     })
   }, [gtin, fresh])
+
+  const handleShare = useCallback(async () => {
+    const product = data.products[gtin]
+    if (!product) return
+    const pv = product.variants[region] || Object.values(product.variants)[0]
+    const url = `${window.location.origin}?scan=${gtin}`
+    const text = `${product.name} by ${product.brand} scored ${pv.score}/100 on Brand Health Checker`
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: product.name, text, url })
+      } else {
+        await navigator.clipboard.writeText(url)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2500)
+      }
+    } catch (e) {
+      if (e.name !== 'AbortError') {
+        try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2500) } catch {}
+      }
+    }
+  }, [gtin, region, data])
 
   if (loading || !data.products[gtin]) return <ResultSkeleton />
 
@@ -146,12 +167,11 @@ export default function ResultScreen({ nav, data, gtin, region, setRegion, scanS
             <PrimaryButton full color={T.ink} onClick={() => nav.push('compare', { gtin })}>
               {Ico.swap('#fff', 18)} Compare {flag(region)} {region} vs {flag(otherRegion)} {otherRegion}
             </PrimaryButton>
-          ) : (
-            <div style={{ textAlign: 'center', fontSize: 12.5, color: T.muted, padding: '10px 0' }}>No verified regional variant yet.</div>
-          )}
-          {p.alternatives && p.alternatives.length > 0 && (
-            <GhostButton full onClick={() => nav.push('alternatives', { gtin })}>{Ico.leaf(T.green, 18)} See healthier alternatives</GhostButton>
-          )}
+          ) : null}
+          <GhostButton full onClick={() => nav.push('alternatives', { gtin })}>{Ico.leaf(T.green, 18)} See healthier picks</GhostButton>
+          <GhostButton full onClick={handleShare}>
+            {copied ? Ico.check(T.green, 18) : Ico.share(T.ink, 18)} {copied ? 'Link copied!' : 'Share score'}
+          </GhostButton>
         </div>
 
         <div style={{ borderTop: '1px solid ' + T.line, paddingTop: 16, paddingBottom: 26 }}>
@@ -161,10 +181,14 @@ export default function ResultScreen({ nav, data, gtin, region, setRegion, scanS
           </div>
           <div style={{ fontSize: 12.5, color: T.muted, marginTop: 10, lineHeight: 1.5 }}>
             {p.fromLabel
-              ? <span>Read from a label photo · estimated values.<br />Informational only — not medical advice.</span>
-              : p.fromApi
-                ? <span>Open Food Facts · live data · fetched just now.<br />Informational only — not medical advice.</span>
-                : <span>Open Food Facts · brand label · last verified Apr 2026.<br />Informational only — not medical advice.</span>}
+            ? <span>Read from a label photo · estimated values.<br />Informational only — not medical advice.</span>
+            : p.source === 'usda'
+              ? <span>USDA FoodData Central · US branded foods database.<br />Informational only — not medical advice.</span>
+              : p.source === 'nutritionix'
+                ? <span>Nutritionix branded foods database.<br />Informational only — not medical advice.</span>
+                : p.fromApi
+                  ? <span>Open Food Facts · live data · fetched just now.<br />Informational only — not medical advice.</span>
+                  : <span>Open Food Facts · brand label · last verified Apr 2026.<br />Informational only — not medical advice.</span>}
           </div>
         </div>
       </div>

@@ -1,7 +1,14 @@
 import { T, bandColor, bandDeep, bandWord, gradeLetter } from '../theme.js'
 import { Ico } from './icons.jsx'
 
-export function Slot({ w, h, label, r = 14, emoji, style }) {
+export function Slot({ w, h, label, r = 14, emoji, imgSrc, style }) {
+  if (imgSrc) {
+    return (
+      <div style={{ width: w, height: h, borderRadius: r, flex: 'none', overflow: 'hidden', background: T.cream, border: '1px solid ' + T.line, ...style }}>
+        <img src={imgSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none' }} />
+      </div>
+    )
+  }
   return (
     <div style={{
       width: w, height: h, borderRadius: r, flex: 'none',

@@ -74,6 +74,11 @@ function cacheSet(barcode, product, source) {
   ).catch(() => {})
 }
 
+function logScan(gtin, found, source) {
+  if (!supabase) return
+  supabase.from('scan_events').insert({ gtin, found, source }).catch(() => {})
+}
+
 // ---- Open Food Facts ----
 function mapOffProduct(barcode, p) {
   const nutriments = p.nutriments || {}
@@ -95,14 +100,15 @@ function mapOffProduct(barcode, p) {
   const countries = (p.countries_tags || []).join(',').toLowerCase()
   const region = countries.includes('united-states') || countries.includes('en:us') ? 'US' : 'EU'
   const categoryTags = p.categories_tags || []
-  const category = categoryTags.length > 0
-    ? categoryTags[categoryTags.length - 1].replace(/^[a-z]{2}:/, '').replace(/-/g, ' ')
-    : 'Food'
+  const categoryTag = categoryTags.length > 0 ? categoryTags[categoryTags.length - 1] : null
+  const category = categoryTag ? categoryTag.replace(/^[a-z]{2}:/, '').replace(/-/g, ' ') : 'Food'
+  const image = p.image_front_thumb_url || p.image_front_url || null
+
   return {
     gtin: barcode, source: 'off',
     brand: p.brands || 'Unknown brand',
     name: p.product_name || p.product_name_en || 'Unknown product',
-    size: p.quantity || '', category, emoji: '🏷️', fromApi: true,
+    size: p.quantity || '', category, categoryTag, image, emoji: '🏷️', fromApi: true,
     variants: {
       [region]: { region, score, novaGroup: p.nova_group ?? 3, confidence: p.completeness > 0.7 ? 'Medium' : 'Low', components, reasons, nutrition, additives, ingredients }
     },
@@ -155,7 +161,8 @@ function mapUsdaProduct(barcode, item) {
     gtin: barcode, source: 'usda',
     brand: item.brandOwner || item.brandName || 'Unknown brand',
     name: item.description || 'Unknown product',
-    size: '', category: item.foodCategory || 'Food', emoji: '🏷️', fromApi: true,
+    size: '', category: item.foodCategory || 'Food', categoryTag: null,
+    image: null, emoji: '🏷️', fromApi: true,
     variants: {
       US: { region: 'US', score, novaGroup: 3, confidence: 'Medium', components, reasons, nutrition, additives: [], ingredients: item.ingredients || '' }
     },
@@ -202,7 +209,8 @@ function mapNutritionixProduct(barcode, item) {
     gtin: barcode, source: 'nutritionix',
     brand: item.brand_name || item.nix_brand_name || 'Unknown brand',
     name: item.food_name || item.nix_item_name || 'Unknown product',
-    size: '', category: 'Food', emoji: '🏷️', fromApi: true,
+    size: '', category: 'Food', categoryTag: null,
+    image: item.photo?.thumb || null, emoji: '🏷️', fromApi: true,
     variants: {
       US: { region: 'US', score, novaGroup: 3, confidence: 'Medium', components, reasons, nutrition, additives: [], ingredients: item.nf_ingredient_statement || '' }
     },
@@ -228,6 +236,58 @@ async function fetchFromNutritionix(barcode) {
   }
 }
 
+const OFF_SEARCH_FIELDS = 'code,product_name,brands,nutriments,additives_tags,ingredients_text,image_front_thumb_url,countries_tags,nova_group,completeness,categories_tags'
+
+// ---- Search by product name ----
+export async function searchProducts(query) {
+  if (!query.trim()) return []
+  try {
+    const url = `https://world.openfoodfacts.org/api/v2/search?search_terms=${encodeURIComponent(query)}&fields=${OFF_SEARCH_FIELDS}&page_size=15&sort_by=unique_scans_n`
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
+    if (!res.ok) return []
+    const json = await res.json()
+    return (json.products || [])
+      .filter((p) => p.code && p.product_name)
+      .map((p) => {
+        const mapped = mapOffProduct(p.code, p)
+        SESSION_CACHE[p.code] = mapped
+        return mapped
+      })
+  } catch (e) {
+    console.warn('searchProducts failed:', e)
+    return []
+  }
+}
+
+// ---- Alternatives by category ----
+export async function fetchAlternatives(category, categoryTag, excludeGtin) {
+  try {
+    const filter = categoryTag
+      ? `categories_tags=${encodeURIComponent(categoryTag)}`
+      : `search_terms=${encodeURIComponent(category)}`
+    const url = `https://world.openfoodfacts.org/api/v2/search?${filter}&fields=${OFF_SEARCH_FIELDS}&page_size=20&sort_by=unique_scans_n`
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
+    if (!res.ok) return []
+    const json = await res.json()
+    return (json.products || [])
+      .filter((p) => p.code && p.product_name && p.code !== excludeGtin)
+      .map((p) => {
+        const mapped = mapOffProduct(p.code, p)
+        SESSION_CACHE[p.code] = mapped
+        return mapped
+      })
+      .sort((a, b) => {
+        const sa = Object.values(a.variants)[0]?.score ?? 0
+        const sb = Object.values(b.variants)[0]?.score ?? 0
+        return sb - sa
+      })
+      .slice(0, 6)
+  } catch (e) {
+    console.warn('fetchAlternatives failed:', e)
+    return []
+  }
+}
+
 // ---- Main entry point ----
 export async function fetchProduct(barcode) {
   if (SESSION_CACHE[barcode]) return SESSION_CACHE[barcode]
@@ -248,6 +308,9 @@ export async function fetchProduct(barcode) {
   if (product) {
     SESSION_CACHE[barcode] = product
     cacheSet(barcode, product, product.source)
+    logScan(barcode, true, product.source)
+  } else {
+    logScan(barcode, false, null)
   }
 
   return product ?? null

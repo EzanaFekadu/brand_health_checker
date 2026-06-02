@@ -2,15 +2,22 @@ import { useState, useEffect, useRef } from 'react'
 import { T, bandColor } from '../theme.js'
 import { Ico } from '../components/icons.jsx'
 import { TopBar, Slot } from '../components/primitives.jsx'
+import { searchProducts } from '../api.js'
 
-export default function ScanScreen({ nav, data }) {
+export default function ScanScreen({ nav, data, onProductFetched }) {
   const [scanning, setScanning] = useState(null)
   const [cameraActive, setCameraActive] = useState(false)
   const [cameraError, setCameraError] = useState(null)
   const [torchOn, setTorchOn] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState([])
+  const [searchLoading, setSearchLoading] = useState(false)
   const videoRef = useRef(null)
   const readerRef = useRef(null)
   const trackRef = useRef(null)
+  const searchInputRef = useRef(null)
+  const searchTimer = useRef(null)
 
   const demo = ['009800895007', '049000028904', '028400090858', data.unknownBarcode]
 
@@ -107,6 +114,38 @@ export default function ScanScreen({ nav, data }) {
     }
   }
 
+  const openSearch = () => {
+    setSearchOpen(true)
+    setSearchQuery('')
+    setSearchResults([])
+    setTimeout(() => searchInputRef.current?.focus(), 80)
+  }
+
+  const closeSearch = () => {
+    setSearchOpen(false)
+    setSearchQuery('')
+    setSearchResults([])
+    clearTimeout(searchTimer.current)
+  }
+
+  const handleSearchChange = (q) => {
+    setSearchQuery(q)
+    clearTimeout(searchTimer.current)
+    if (!q.trim()) { setSearchResults([]); return }
+    setSearchLoading(true)
+    searchTimer.current = setTimeout(async () => {
+      const results = await searchProducts(q)
+      setSearchResults(results)
+      setSearchLoading(false)
+    }, 500)
+  }
+
+  const handleSearchResult = (product) => {
+    onProductFetched?.(product)
+    closeSearch()
+    nav.scan(product.gtin)
+  }
+
   const runDemoScan = (gtin) => {
     if (scanning) return
     setScanning(gtin)
@@ -140,11 +179,10 @@ export default function ScanScreen({ nav, data }) {
 
       <TopBar tone="light" title="SCAN A BARCODE"
         right={
-          <button onClick={toggleTorch} style={{
-            width: 40, height: 40, borderRadius: 13, border: 'none',
-            background: torchOn ? 'rgba(255,220,50,0.3)' : 'rgba(255,255,255,0.16)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-          }}>{Ico.flash(torchOn ? '#ffd632' : '#fff', 19)}</button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={openSearch} style={{ width: 40, height: 40, borderRadius: 13, border: 'none', background: 'rgba(255,255,255,0.16)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>{Ico.search('#fff', 19)}</button>
+            <button onClick={toggleTorch} style={{ width: 40, height: 40, borderRadius: 13, border: 'none', background: torchOn ? 'rgba(255,220,50,0.3)' : 'rgba(255,255,255,0.16)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>{Ico.flash(torchOn ? '#ffd632' : '#fff', 19)}</button>
+          </div>
         } />
 
       {/* Scanning reticle */}
@@ -216,6 +254,65 @@ export default function ScanScreen({ nav, data }) {
           </div>
         </div>
       </div>
+      {/* Search overlay */}
+      {searchOpen && (
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(23,21,15,0.97)', zIndex: 20, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: 'calc(env(safe-area-inset-top) + 12px) 16px 10px' }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: '0 14px', height: 46 }}>
+              {Ico.search('rgba(255,255,255,0.5)', 18)}
+              <input
+                ref={searchInputRef}
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder="Search products by name…"
+                style={{ flex: 1, background: 'none', border: 'none', outline: 'none', color: '#fff', fontSize: 15, fontFamily: T.ui }}
+              />
+              {searchQuery ? <button onClick={() => handleSearchChange('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', display: 'flex' }}>{Ico.x('rgba(255,255,255,0.5)', 16)}</button> : null}
+            </div>
+            <button onClick={closeSearch} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.7)', fontSize: 14, fontWeight: 700, fontFamily: T.ui, padding: '0 4px' }}>Cancel</button>
+          </div>
+
+          <div style={{ flex: 1, padding: '4px 16px' }}>
+            {searchLoading && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {[0, 1, 2].map((i) => (
+                  <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                    <div className="bhc-shimmer" style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(255,255,255,0.1)', flexShrink: 0 }} />
+                    <div style={{ flex: 1 }}>
+                      <div className="bhc-shimmer" style={{ width: '35%', height: 10, borderRadius: 5, background: 'rgba(255,255,255,0.1)', marginBottom: 8 }} />
+                      <div className="bhc-shimmer" style={{ width: '65%', height: 13, borderRadius: 5, background: 'rgba(255,255,255,0.1)' }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {!searchLoading && searchQuery && searchResults.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '48px 0', color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>No products found for "{searchQuery}"</div>
+            )}
+            {!searchLoading && searchResults.map((p) => {
+              const v = Object.values(p.variants)[0]
+              return (
+                <button key={p.gtin} onClick={() => handleSearchResult(p)} style={{ display: 'flex', gap: 12, alignItems: 'center', width: '100%', textAlign: 'left', background: 'none', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '12px 0', cursor: 'pointer', fontFamily: T.ui }}>
+                  <Slot w={44} h={44} r={12} imgSrc={p.image} emoji={p.emoji} style={{ border: '1px solid rgba(255,255,255,0.12)' }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 700, letterSpacing: 0.5 }}>{p.brand.toUpperCase()}</div>
+                    <div style={{ fontSize: 14.5, fontWeight: 600, color: '#fff', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                  </div>
+                  {v && (
+                    <div style={{ textAlign: 'center', flexShrink: 0 }}>
+                      <div style={{ fontFamily: T.display, fontWeight: 800, fontSize: 24, color: bandColor(v.score), lineHeight: 1 }}>{v.score}</div>
+                    </div>
+                  )}
+                  {Ico.arrow('rgba(255,255,255,0.3)', 18)}
+                </button>
+              )
+            })}
+            {!searchQuery && (
+              <div style={{ textAlign: 'center', padding: '48px 0', color: 'rgba(255,255,255,0.4)', fontSize: 14, lineHeight: 1.6 }}>Type a product name, brand,<br />or ingredient to search</div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

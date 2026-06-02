@@ -15,4 +15,6 @@ export const Ico = {
   info: (c, s = 18) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke={c} strokeWidth="2"/><path d="M12 11v5M12 7.5v.5" stroke={c} strokeWidth="2.2" strokeLinecap="round"/></svg>,
   alert: (c, s = 18) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M12 3l9 16H3l9-16z" stroke={c} strokeWidth="2" strokeLinejoin="round"/><path d="M12 10v4M12 17v.5" stroke={c} strokeWidth="2.2" strokeLinecap="round"/></svg>,
   star: (c, s = 16, fill = 'none') => <svg width={s} height={s} viewBox="0 0 24 24" fill={fill}><path d="M12 3l2.6 5.6 6 .7-4.4 4.1 1.2 6L12 16.9 6.6 19.4l1.2-6L3.4 9.3l6-.7L12 3z" stroke={c} strokeWidth="1.6" strokeLinejoin="round"/></svg>,
+  search: (c, s = 20) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke={c} strokeWidth="2"/><path d="M20 20l-3-3" stroke={c} strokeWidth="2.2" strokeLinecap="round"/></svg>,
+  share: (c, s = 20) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" stroke={c} strokeWidth="2" strokeLinecap="round"/><path d="M12 3v12M8 7l4-4 4 4" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
 }

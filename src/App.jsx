@@ -74,6 +74,10 @@ export default function App() {
     }
   }, [top.screen, top.params, region, customProducts])
 
+  const registerProduct = useCallback((product) => {
+    setCustomProducts((m) => ({ ...m, [product.gtin]: product }))
+  }, [])
+
   const commitOcr = useCallback((product) => {
     setCustomProducts((m) => ({ ...m, [product.gtin]: product }))
     setHistory((h) => [product.gtin, ...h.filter((x) => x !== product.gtin)])
@@ -129,6 +133,16 @@ export default function App() {
     setAvoidList((l) => l.filter((k) => k !== key))
   }
 
+  // Handle ?scan=GTIN deep links on initial load
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const deepGtin = params.get('scan')
+    if (deepGtin) {
+      window.history.replaceState({}, '', window.location.pathname)
+      nav.scan(deepGtin)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   const showNav = ['scan', 'history', 'saved', 'you'].includes(top.screen) && stack.length === 1
 
   const data = Object.keys(customProducts).length
@@ -139,7 +153,7 @@ export default function App() {
   const renderScreen = () => {
     const { screen, params } = top
     switch (screen) {
-      case 'scan': return <ScanScreen {...common} />
+      case 'scan': return <ScanScreen {...common} onProductFetched={registerProduct} />
       case 'labelscan': return <LabelScanScreen {...common} />
       case 'labelparsing': return <LabelParsingScreen {...common} />
       case 'labelreview': return <LabelReviewScreen {...common} commitOcr={commitOcr} isAvoided={isAvoided} toggleAvoidLabel={toggleAvoidLabel} />
@@ -149,7 +163,7 @@ export default function App() {
           setRegion={setRegion} scanStyle={scoreStyle} driversStyle="rows"
           favs={favs} toggleFav={toggleFav}
           avoidList={avoidList} avoidOptions={avoidOptions}
-          onProductFetched={(product) => setCustomProducts((m) => ({ ...m, [product.gtin]: product }))}
+          onProductFetched={registerProduct}
         />
       )
       case 'breakdown': return <BreakdownScreen {...common} gtin={params.gtin} isAvoided={isAvoided} toggleAvoidLabel={toggleAvoidLabel} />
