@@ -1,0 +1,43 @@
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  background: #f7f6f2;
+  font-family: 'Hanken Grotesk', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* Screen transitions — transform-only so background tabs never go blank */
+.bhc-screen { opacity: 1; }
+@keyframes bhcPush { from { transform: translateX(24px); } to { transform: translateX(0); } }
+@keyframes bhcPop  { from { transform: translateX(-20px); } to { transform: translateX(0); } }
+.bhc-push { animation: bhcPush 0.24s cubic-bezier(.32,.72,0,1) both; }
+.bhc-pop  { animation: bhcPop  0.24s cubic-bezier(.32,.72,0,1) both; }
+@media (prefers-reduced-motion: reduce) { .bhc-push, .bhc-pop { animation: none; } }
+
+/* Skeleton shimmer */
+@keyframes bhcShimmer { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+.bhc-shimmer { animation: bhcShimmer 1.1s ease-in-out infinite; }
+
+/* OCR animations */
+@keyframes ocrSweep { 0% { top: -36px; } 100% { top: 100%; } }
+.ocr-sweep { animation: ocrSweep 1.5s linear infinite; }
+@keyframes ocrPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.6); opacity: 0.5; } }
+.ocr-pulse { animation: ocrPulse 0.9s ease-in-out infinite; }
+
+/* Hide scrollbars for native feel */
+::-webkit-scrollbar { width: 0; height: 0; }
+* { scrollbar-width: none; }

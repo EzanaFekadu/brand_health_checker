@@ -1,0 +1,18 @@
+export const Ico = {
+  scan: (c, s = 24) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" stroke={c} strokeWidth="2" strokeLinecap="round"/><path d="M3 12h18" stroke={c} strokeWidth="2" strokeLinecap="round"/></svg>,
+  clock: (c, s = 24) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke={c} strokeWidth="2"/><path d="M12 7v5l3 2" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  heart: (c, s = 24, fill = 'none') => <svg width={s} height={s} viewBox="0 0 24 24" fill={fill}><path d="M12 20s-7-4.5-7-9.5A3.8 3.8 0 0 1 12 7a3.8 3.8 0 0 1 7 3.5C19 15.5 12 20 12 20z" stroke={c} strokeWidth="2" strokeLinejoin="round"/></svg>,
+  user: (c, s = 24) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke={c} strokeWidth="2"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" stroke={c} strokeWidth="2" strokeLinecap="round"/></svg>,
+  back: (c, s = 24) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke={c} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  flash: (c, s = 22) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" stroke={c} strokeWidth="2" strokeLinejoin="round"/></svg>,
+  keyboard: (c, s = 22) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="12" rx="2" stroke={c} strokeWidth="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8" stroke={c} strokeWidth="2" strokeLinecap="round"/></svg>,
+  plus: (c, s = 22) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke={c} strokeWidth="2.2" strokeLinecap="round"/></svg>,
+  arrow: (c, s = 20) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke={c} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  check: (c, s = 18) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 6" stroke={c} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  x: (c, s = 18) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke={c} strokeWidth="2.4" strokeLinecap="round"/></svg>,
+  swap: (c, s = 20) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M7 4L3 8l4 4M3 8h13M17 20l4-4-4-4M21 16H8" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  leaf: (c, s = 20) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M4 20C4 11 11 4 20 4c0 9-7 16-16 16z" stroke={c} strokeWidth="2" strokeLinejoin="round"/><path d="M9 15c3-3 6-4 9-4" stroke={c} strokeWidth="2" strokeLinecap="round"/></svg>,
+  info: (c, s = 18) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke={c} strokeWidth="2"/><path d="M12 11v5M12 7.5v.5" stroke={c} strokeWidth="2.2" strokeLinecap="round"/></svg>,
+  alert: (c, s = 18) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M12 3l9 16H3l9-16z" stroke={c} strokeWidth="2" strokeLinejoin="round"/><path d="M12 10v4M12 17v.5" stroke={c} strokeWidth="2.2" strokeLinecap="round"/></svg>,
+  star: (c, s = 16, fill = 'none') => <svg width={s} height={s} viewBox="0 0 24 24" fill={fill}><path d="M12 3l2.6 5.6 6 .7-4.4 4.1 1.2 6L12 16.9 6.6 19.4l1.2-6L3.4 9.3l6-.7L12 3z" stroke={c} strokeWidth="1.6" strokeLinejoin="round"/></svg>,
+}
